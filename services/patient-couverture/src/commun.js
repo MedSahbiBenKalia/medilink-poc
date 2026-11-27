@@ -34,7 +34,8 @@ function demarrer(app, port, nomService) {
       return res.status(400).json({ erreur: 'Corps JSON invalide' });
     }
     const status = err.status || 500;
-    if (status >= 500) console.error(`[${nomService}]`, err);
+    if (!err.status) console.error(`[${nomService}] erreur inattendue :`, err); // bug : pile complete
+    else if (status >= 500) console.warn(`[${nomService}] ${status} ${err.message}`); // panne prevue : une ligne
     res.status(status).json({ erreur: status >= 500 && !err.status ? 'Erreur interne du service' : err.message });
   });
 
