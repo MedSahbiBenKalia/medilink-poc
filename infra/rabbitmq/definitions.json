@@ -1,0 +1,32 @@
+{
+  "exchanges": [
+    {
+      "name": "soins.evenements",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "stock.sous-seuil",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "soins.evenements",
+      "vhost": "/",
+      "destination": "stock.sous-seuil",
+      "destination_type": "queue",
+      "routing_key": "stock.sous-seuil",
+      "arguments": {}
+    }
+  ]
+}

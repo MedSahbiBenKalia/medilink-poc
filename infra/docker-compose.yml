@@ -1,0 +1,56 @@
+# MediLink - infrastructure de la tache 1 
+#
+# Demo multi-PC (chaque PC lance son profil) :
+#   PC2 : docker compose --profile pc2 up -d    (PostgreSQL : soins + pharmacie)
+#   PC3 : docker compose --profile pc3 up -d    (PostgreSQL : gestion)
+#   PC4 : docker compose --profile pc4 up -d    (RabbitMQ + Mailpit)
+# Plan B (un seul PC) :
+#   docker compose --profile all up -d
+#
+# Remise a zero des bases : docker compose --profile all down -v
+
+services:
+  postgres:
+    image: postgres:16
+    profiles: ["pc2", "pc3", "all"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    profiles: ["pc4", "all"]
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "${RABBITMQ_AMQP_PORT}:5672"
+      - "${RABBITMQ_CONSOLE_PORT}:15672"
+    volumes:
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/conf.d/90-medilink.conf:ro
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit
+    profiles: ["pc4", "all"]
+    ports:
+      - "${MAILPIT_SMTP_PORT}:1025"
+      - "${MAILPIT_UI_PORT}:8025"
+
+volumes:
+  pgdata:
