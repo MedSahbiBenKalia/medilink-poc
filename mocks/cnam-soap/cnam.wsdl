@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<wsdl:definitions
+    name="CNAMService"
+    targetNamespace="urn:medilink:cnam:droits"
+    xmlns:tns="urn:medilink:cnam:droits"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <!-- 1. Structure des données -->
+    <wsdl:types>
+        <xsd:schema
+            targetNamespace="urn:medilink:cnam:droits"
+            elementFormDefault="qualified">
+
+            <xsd:element name="verifierDroitsRequest">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="numeroAssure"
+                                     type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="verifierDroitsResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="droitsValides"
+                                     type="xsd:boolean"/>
+                        <xsd:element name="dateFinDroits"
+                                     type="xsd:date"
+                                     nillable="true"/>
+                        <xsd:element name="motif"
+                                     type="xsd:string"
+                                     nillable="true"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+        </xsd:schema>
+    </wsdl:types>
+
+    <!-- 2. Messages échangés -->
+    <wsdl:message name="VerifierDroitsInput">
+        <wsdl:part name="parameters"
+                   element="tns:verifierDroitsRequest"/>
+    </wsdl:message>
+
+    <wsdl:message name="VerifierDroitsOutput">
+        <wsdl:part name="parameters"
+                   element="tns:verifierDroitsResponse"/>
+    </wsdl:message>
+
+    <!-- 3. Opération du service -->
+    <wsdl:portType name="CNAMPortType">
+        <wsdl:operation name="verifierDroits">
+            <wsdl:input message="tns:VerifierDroitsInput"/>
+            <wsdl:output message="tns:VerifierDroitsOutput"/>
+        </wsdl:operation>
+    </wsdl:portType>
+
+    <!-- 4. Protocole SOAP -->
+    <wsdl:binding name="CNAMSoapBinding"
+                  type="tns:CNAMPortType">
+
+        <soap:binding style="document"
+            transport="http://schemas.xmlsoap.org/soap/http"/>
+
+        <wsdl:operation name="verifierDroits">
+            <soap:operation soapAction="verifierDroits"/>
+
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+
+    </wsdl:binding>
+
+    <!-- 5. Adresse du service -->
+    <wsdl:service name="CNAMService">
+        <wsdl:port name="CNAMSoapPort"
+                   binding="tns:CNAMSoapBinding">
+            <soap:address
+                location="http://localhost:8101/cnam/droits"/>
+        </wsdl:port>
+    </wsdl:service>
+
+</wsdl:definitions>
