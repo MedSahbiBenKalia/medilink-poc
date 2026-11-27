@@ -1,4 +1,13 @@
 {
+  "vhosts": [
+    { "name": "/" }
+  ],
+  "users": [
+    { "name": "medilink", "password": "medilink", "tags": "administrator" }
+  ],
+  "permissions": [
+    { "user": "medilink", "vhost": "/", "configure": ".*", "write": ".*", "read": ".*" }
+  ],
   "exchanges": [
     {
       "name": "soins.evenements",

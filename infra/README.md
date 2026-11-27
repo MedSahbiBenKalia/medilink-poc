@@ -19,5 +19,5 @@ infra/
 - [x] Etape 1 : squelette (ce fichier, `.env.example`)
 - [x] Etape 2 : schemas SQL et donnees de test (`postgres/init/01-soins.sql`, `02-pharmacie.sql`, `03-gestion.sql`)
 - [x] Etape 3 : docker-compose, RabbitMQ, Mailpit
-- [ ] Etape 4 : verification sur un PC
+- [x] Etape 4 : verification sur un PC (profil `all`)
 - [ ] Etape 5 : plan reseau (docs/)

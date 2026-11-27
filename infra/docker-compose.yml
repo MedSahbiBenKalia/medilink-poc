@@ -30,9 +30,7 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     profiles: ["pc4", "all"]
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    # Utilisateur medilink/medilink, vhost "/", exchange et file : voir rabbitmq/definitions.json
     ports:
       - "${RABBITMQ_AMQP_PORT}:5672"
       - "${RABBITMQ_CONSOLE_PORT}:15672"
