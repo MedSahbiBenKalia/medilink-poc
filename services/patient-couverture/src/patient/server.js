@@ -69,8 +69,10 @@ app.post('/patients', async (req, res) => {
   res.status(201).json(await lireParIpg(ipg));
 });
 
-// Modifier un patient (modification partielle) : seuls les champs envoyes changent
-app.patch('/patients/:ipg', async (req, res) => {
+// Modifier un patient (modification partielle) : seuls les champs envoyes changent.
+// PUT est accepte aussi, car interfaces.md §2 annonce PUT : un objet complet envoye en PUT
+// donne le meme resultat qu'un remplacement.
+async function modifierPatient(req, res) {
   const { ipg } = req.params;
   const existant = await lireParIpg(ipg);
   if (!existant) throw new ErreurHttp(404, `Patient ${ipg} inconnu`);
@@ -101,6 +103,8 @@ app.patch('/patients/:ipg', async (req, res) => {
     throw erreurBase(err);
   }
   res.json(await lireParIpg(ipg));
-});
+}
+app.patch('/patients/:ipg', modifierPatient);
+app.put('/patients/:ipg', modifierPatient);
 
 demarrer(app, config.patientPort, 'patient');

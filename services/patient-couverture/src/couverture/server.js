@@ -71,7 +71,8 @@ app.post('/couvertures/verification', async (req, res) => {
 
 // Regularisation par l'agent d'accueil (modification partielle) :
 // { "typeCouverture"?, "numeroAssure"?, "assureur"?, "accordId"?, "motif"? }
-app.patch('/couvertures/:ipg', async (req, res) => {
+// PUT est accepte aussi, car interfaces.md §2 annonce PUT /couvertures/{ipg}.
+async function regulariser(req, res) {
   const { ipg } = req.params;
   const corps = req.body || {};
   if (!texteOuNull(corps.accordId)) throw new ErreurHttp(400, 'accordId doit etre un texte');
@@ -94,7 +95,9 @@ app.patch('/couvertures/:ipg', async (req, res) => {
   const accordId = corps.accordId ?? null;
   await enregistrerCouverture(ipg, true, motif, accordId);
   res.json(reponse(patient, true, motif, accordId));
-});
+}
+app.patch('/couvertures/:ipg', regulariser);
+app.put('/couvertures/:ipg', regulariser);
 
 // Derniere couverture enregistree d'un patient
 app.get('/couvertures/:ipg', async (req, res) => {

@@ -76,7 +76,7 @@ Tous les services exposent `GET /health`, qui renvoie `{ "statut": "ok", "servic
 | GET | `/patients/{ipg}` | 200 · 404 |
 | GET | `/patients?cin=08123456` | 200 · 400 (cin absent) · 404 |
 | POST | `/patients` | 201 (IPG suivant généré, ex. `IPG-0005`) · 400 · 409 (CIN déjà connu) |
-| PATCH | `/patients/{ipg}` | 200 · 400 · 404 · 409 |
+| PATCH (ou PUT) | `/patients/{ipg}` | 200 · 400 · 404 · 409 |
 
 Validation : `cin` doit compter 8 chiffres ; `nom`, `prenom`, `dateNaissance` (`AAAA-MM-JJ`) et `numeroAssure` sont obligatoires ;
 `typeCouverture` vaut `CNAM` ou `ASSUREUR` ; `assureur` est obligatoire si `ASSUREUR` et doit être null si `CNAM`.
@@ -88,7 +88,7 @@ Le patient obtenu après modification est validé en entier. L'IPG n'est pas mod
 | Méthode | Chemin | Rôle |
 |---|---|---|
 | POST | `/couvertures/verification` | `{ "ipg": "IPG-0001" }` → lit le patient, appelle l'ESB, enregistre, répond |
-| PATCH | `/couvertures/{ipg}` | régularisation par l'agent d'accueil |
+| PATCH (ou PUT) | `/couvertures/{ipg}` | régularisation par l'agent d'accueil |
 | GET | `/couvertures/{ipg}` | dernière couverture enregistrée |
 
 Réponse commune :
@@ -150,7 +150,8 @@ docker run -d -p 8092:8092 -e DB_URL=postgres://host.docker.internal:5432/soins 
 
 ## 9. Écarts avec `interfaces.md` et simplifications du POC
 
-- **`PATCH` au lieu de `PUT`** pour `/patients/{ipg}` et `/couvertures/{ipg}` : modification partielle, où l'on n'envoie que ce qui change.
+- **`PATCH` en plus de `PUT`** pour `/patients/{ipg}` et `/couvertures/{ipg}`. `PATCH` est la méthode recommandée : modification partielle, où l'on n'envoie que ce qui change.
+  `PUT`, annoncé dans `interfaces.md`, reste accepté et appelle le même code, ce qui garde la compatibilité avec le contrat (Camunda, Kong). Un objet complet envoyé en `PUT` donne un remplacement.
 - **Une seule couverture par patient**, alignée sur la table de la tâche 1 : chaque vérification ou régularisation remplace la précédente, sans historique.
   `organisme` n'est pas stocké : il est calculé à partir du patient.
 - `date_fin_droits` n'est pas renseignée, car la réponse de l'ESB définie dans `interfaces.md` ne la contient pas.

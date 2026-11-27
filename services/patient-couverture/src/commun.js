@@ -44,8 +44,16 @@ function demarrer(app, port, nomService) {
     res.status(status).json({ erreur: status >= 500 && !err.status ? 'Erreur interne du service' : err.message });
   });
 
-  app.listen(port, '0.0.0.0', () => {
+  const serveur = app.listen(port, '0.0.0.0', () => {
     console.log(`[${nomService}] a l'ecoute sur 0.0.0.0:${port}`);
+  });
+  serveur.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`[${nomService}] le port ${port} est deja utilise : arreter l'autre programme ou changer le port dans .env`);
+    } else {
+      console.error(`[${nomService}] impossible de demarrer :`, err.message);
+    }
+    process.exit(1);
   });
 }
 
