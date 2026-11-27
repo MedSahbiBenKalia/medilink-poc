@@ -33,6 +33,16 @@ CREATE TABLE reception (
     date_reception TIMESTAMP NOT NULL DEFAULT now()
 );
 
+-- Table Outbox : patron transactionnel pour publier les événements RabbitMQ de manière fiable.
+-- Un enregistrement est créé dans la même transaction que la consommation ;
+-- le service lit cette table pour publier et marque publie=TRUE après confirmation.
+CREATE TABLE stock_event_outbox (
+    id       SERIAL PRIMARY KEY,
+    payload  JSONB NOT NULL,
+    publie   BOOLEAN NOT NULL DEFAULT FALSE,
+    cree_le  TIMESTAMP NOT NULL DEFAULT now()
+);
+
 -- ---------- Donnees de test ----------
 INSERT INTO article (code, libelle, seuil, fournisseur) VALUES
  ('PARA500', 'Paracetamol 500 mg', 100, 'SIPHAT'),

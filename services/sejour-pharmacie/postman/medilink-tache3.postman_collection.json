@@ -1,0 +1,501 @@
+{
+  "info": {
+    "_postman_id": "tache3-sejour-stock-medilink",
+    "name": "MediLink – Tâche 3 : Séjour & Actes / Stock Pharmacie",
+    "description": "Collection de test pour les deux services de la Tâche 3 :\n- Service Séjour & Actes (port 8093)\n- Service Stock Pharmacie (port 8094)\n\nScénarios couverts :\n1. Health checks\n2. Lits libres\n3. Ouverture d'un séjour\n4. Enregistrement d'actes\n5. Lecture des actes\n6. Validation de sortie (événement vers ESB)\n7. Lecture du stock\n8. Consommation qui déclenche stockSousSeuil\n9. Consommation normale\n10. Réception de stock\n11. Cas d'erreur (séjour inexistant, stock insuffisant, etc.)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "sejour_host", "value": "http://localhost:8093" },
+    { "key": "stock_host",  "value": "http://localhost:8094" },
+    { "key": "sejourId",    "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1 – Health checks",
+      "item": [
+        {
+          "name": "1.1 Health Séjour & Actes",
+          "request": {
+            "method": "GET",
+            "url": "{{sejour_host}}/health",
+            "description": "Vérifie que le Service Séjour & Actes est opérationnel."
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Health Stock Pharmacie",
+          "request": {
+            "method": "GET",
+            "url": "{{stock_host}}/health",
+            "description": "Vérifie que le Service Stock Pharmacie est opérationnel."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2 – Lits libres",
+      "item": [
+        {
+          "name": "2.1 Lister tous les lits libres",
+          "request": {
+            "method": "GET",
+            "url": "{{sejour_host}}/lits/libres",
+            "description": "Renvoie tous les lits disponibles. Attendu : [L-10, L-11, L-12] au départ."
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 Lits libres filtrés par service CHIRURGIE",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{sejour_host}}/lits/libres?service=CHIRURGIE",
+              "host": ["{{sejour_host}}"],
+              "path": ["lits", "libres"],
+              "query": [{ "key": "service", "value": "CHIRURGIE" }]
+            },
+            "description": "Filtre les lits libres par service."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3 – Ouvrir un séjour",
+      "item": [
+        {
+          "name": "3.1 Ouvrir un séjour (IPG-0001, L-10, CHIRURGIE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('sejourId', json.sejourId);",
+                  "  console.log('sejourId capturé :', json.sejourId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{sejour_host}}/sejours",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ipg\": \"IPG-0001\",\n  \"service\": \"CHIRURGIE\",\n  \"litId\": \"L-10\"\n}"
+            },
+            "description": "Ouvre un séjour pour IPG-0001. Capture le sejourId dans la variable de collection."
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 Lire le séjour créé",
+          "request": {
+            "method": "GET",
+            "url": "{{sejour_host}}/sejours/{{sejourId}}",
+            "description": "Lit le séjour dont l'ID a été capturé à l'étape précédente."
+          },
+          "response": []
+        },
+        {
+          "name": "3.3 Lit L-10 maintenant occupé (vérification)",
+          "request": {
+            "method": "GET",
+            "url": "{{sejour_host}}/lits/libres",
+            "description": "L-10 ne doit plus apparaître dans la liste des lits libres."
+          },
+          "response": []
+        },
+        {
+          "name": "3.4 Ouvrir séjour sur lit déjà occupé → 409",
+          "request": {
+            "method": "POST",
+            "url": "{{sejour_host}}/sejours",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ipg\": \"IPG-0002\",\n  \"service\": \"CHIRURGIE\",\n  \"litId\": \"L-10\"\n}"
+            },
+            "description": "Le lit L-10 est occupé → 409 Lit déjà occupé."
+          },
+          "response": []
+        },
+        {
+          "name": "3.5 Ouvrir séjour patient inexistant → 404",
+          "request": {
+            "method": "POST",
+            "url": "{{sejour_host}}/sejours",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ipg\": \"IPG-9999\",\n  \"service\": \"CHIRURGIE\",\n  \"litId\": \"L-11\"\n}"
+            },
+            "description": "Patient IPG-9999 inexistant → 404."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4 – Enregistrer des actes",
+      "item": [
+        {
+          "name": "4.1 Enregistrer actes (consultation + nuitée)",
+          "request": {
+            "method": "POST",
+            "url": "{{sejour_host}}/sejours/{{sejourId}}/actes",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lignes\": [\n    { \"codeActe\": \"CONS\",  \"quantite\": 1, \"dateActe\": \"2026-11-27\" },\n    { \"codeActe\": \"NUIT\",  \"quantite\": 2, \"dateActe\": \"2026-11-27\" }\n  ]\n}"
+            },
+            "description": "Enregistre une consultation et 2 nuitées sur le séjour courant."
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 Enregistrer actes – code acte inconnu → 400",
+          "request": {
+            "method": "POST",
+            "url": "{{sejour_host}}/sejours/{{sejourId}}/actes",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lignes\": [\n    { \"codeActe\": \"INCONNU\", \"quantite\": 1, \"dateActe\": \"2026-11-27\" }\n  ]\n}"
+            },
+            "description": "Le code acte INCONNU n'existe pas dans la table tarif → 400."
+          },
+          "response": []
+        },
+        {
+          "name": "4.3 Enregistrer actes – corps invalide → 400",
+          "request": {
+            "method": "POST",
+            "url": "{{sejour_host}}/sejours/{{sejourId}}/actes",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lignes\": []\n}"
+            },
+            "description": "Tableau vide → 400 lignes doit être un tableau non vide."
+          },
+          "response": []
+        },
+        {
+          "name": "4.4 Lister les actes du séjour",
+          "request": {
+            "method": "GET",
+            "url": "{{sejour_host}}/sejours/{{sejourId}}/actes",
+            "description": "Renvoie tous les actes enregistrés avec le prix unitaire."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5 – Validation de sortie",
+      "item": [
+        {
+          "name": "5.1 Valider la sortie du séjour",
+          "request": {
+            "method": "PUT",
+            "url": "{{sejour_host}}/sejours/{{sejourId}}/sortie",
+            "description": "Clôture le séjour, libère le lit L-10 et publie l'événement sortie à l'ESB (mock ou réel)."
+          },
+          "response": []
+        },
+        {
+          "name": "5.2 L-10 de nouveau libre (vérification)",
+          "request": {
+            "method": "GET",
+            "url": "{{sejour_host}}/lits/libres",
+            "description": "Le lit L-10 doit de nouveau apparaître dans la liste des lits libres."
+          },
+          "response": []
+        },
+        {
+          "name": "5.3 Valider la sortie à nouveau → 409",
+          "request": {
+            "method": "PUT",
+            "url": "{{sejour_host}}/sejours/{{sejourId}}/sortie",
+            "description": "Le séjour est déjà clôturé → 409."
+          },
+          "response": []
+        },
+        {
+          "name": "5.4 Ajouter un acte après sortie → 409",
+          "request": {
+            "method": "POST",
+            "url": "{{sejour_host}}/sejours/{{sejourId}}/actes",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lignes\": [\n    { \"codeActe\": \"CONS\", \"quantite\": 1, \"dateActe\": \"2026-11-27\" }\n  ]\n}"
+            },
+            "description": "Séjour clôturé → 409 Le séjour est déjà clôturé."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6 – Stock Pharmacie",
+      "item": [
+        {
+          "name": "6.1 Lister tout le stock",
+          "request": {
+            "method": "GET",
+            "url": "{{stock_host}}/stocks",
+            "description": "Liste tous les articles avec leur stock actuel. Attendu : PARA500=105, AMOX1G=300."
+          },
+          "response": []
+        },
+        {
+          "name": "6.2 Lire le stock PARA500",
+          "request": {
+            "method": "GET",
+            "url": "{{stock_host}}/stocks/PARA500",
+            "description": "Stock PARA500 : quantité 105, seuil 100. Pas encore sous le seuil."
+          },
+          "response": []
+        },
+        {
+          "name": "6.3 Article inexistant → 404",
+          "request": {
+            "method": "GET",
+            "url": "{{stock_host}}/stocks/INEXISTANT",
+            "description": "Article inconnu → 404."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7 – Consommations (dont déclenchement stockSousSeuil)",
+      "item": [
+        {
+          "name": "7.1 Consommer 10 PARA500 → déclenche stockSousSeuil",
+          "request": {
+            "method": "POST",
+            "url": "{{stock_host}}/consommations",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sejourId\": \"SEJ-0001\",\n  \"codeArticle\": \"PARA500\",\n  \"quantite\": 10\n}"
+            },
+            "description": "Après : stock PARA500 = 95 < seuil 100. L'événement stockSousSeuil doit être publié sur RabbitMQ. Vérifier dans la console RabbitMQ (http://localhost:15672, file stock.sous-seuil)."
+          },
+          "response": []
+        },
+        {
+          "name": "7.2 Stock PARA500 après consommation (95)",
+          "request": {
+            "method": "GET",
+            "url": "{{stock_host}}/stocks/PARA500",
+            "description": "Le stock doit être à 95, en dessous du seuil de 100."
+          },
+          "response": []
+        },
+        {
+          "name": "7.3 Consommer 5 PARA500 (pas de nouvel événement)",
+          "request": {
+            "method": "POST",
+            "url": "{{stock_host}}/consommations",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sejourId\": \"SEJ-0001\",\n  \"codeArticle\": \"PARA500\",\n  \"quantite\": 5\n}"
+            },
+            "description": "Le stock était déjà sous le seuil → aucun nouvel événement RabbitMQ. publication=AUCUN."
+          },
+          "response": []
+        },
+        {
+          "name": "7.4 Consommer AMOX1G normalement",
+          "request": {
+            "method": "POST",
+            "url": "{{stock_host}}/consommations",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sejourId\": \"SEJ-0001\",\n  \"codeArticle\": \"AMOX1G\",\n  \"quantite\": 5\n}"
+            },
+            "description": "Stock AMOX1G passe de 300 à 295, reste au-dessus du seuil 80. Aucun événement."
+          },
+          "response": []
+        },
+        {
+          "name": "7.5 Consommation stock insuffisant → 409",
+          "request": {
+            "method": "POST",
+            "url": "{{stock_host}}/consommations",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sejourId\": \"SEJ-0001\",\n  \"codeArticle\": \"PARA500\",\n  \"quantite\": 9999\n}"
+            },
+            "description": "Quantité demandée supérieure au stock disponible → 409 Stock insuffisant."
+          },
+          "response": []
+        },
+        {
+          "name": "7.6 Consommation article inconnu → 404",
+          "request": {
+            "method": "POST",
+            "url": "{{stock_host}}/consommations",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sejourId\": \"SEJ-0001\",\n  \"codeArticle\": \"INCONNU\",\n  \"quantite\": 1\n}"
+            },
+            "description": "Article inconnu → 404."
+          },
+          "response": []
+        },
+        {
+          "name": "7.7 Lister consommations du séjour SEJ-0001",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{stock_host}}/consommations?sejourId=SEJ-0001",
+              "host": ["{{stock_host}}"],
+              "path": ["consommations"],
+              "query": [{ "key": "sejourId", "value": "SEJ-0001" }]
+            },
+            "description": "Renvoie l'historique des consommations pour le séjour SEJ-0001."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8 – Réceptions de stock",
+      "item": [
+        {
+          "name": "8.1 Réceptionner un réapprovisionnement PARA500",
+          "request": {
+            "method": "POST",
+            "url": "{{stock_host}}/receptions",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"commandeId\": \"CMD-0001\",\n  \"codeArticle\": \"PARA500\",\n  \"quantite\": 50\n}"
+            },
+            "description": "Reçoit 50 unités de PARA500. Le stock passe de 90 à 140."
+          },
+          "response": []
+        },
+        {
+          "name": "8.2 Stock PARA500 après réception",
+          "request": {
+            "method": "GET",
+            "url": "{{stock_host}}/stocks/PARA500",
+            "description": "Le stock doit être remonté au-dessus du seuil."
+          },
+          "response": []
+        },
+        {
+          "name": "8.3 Réception sans commandeId",
+          "request": {
+            "method": "POST",
+            "url": "{{stock_host}}/receptions",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codeArticle\": \"AMOX1G\",\n  \"quantite\": 100\n}"
+            },
+            "description": "commandeId est optionnel. Reçoit 100 unités d'AMOX1G."
+          },
+          "response": []
+        },
+        {
+          "name": "8.4 Réception article inconnu → 404",
+          "request": {
+            "method": "POST",
+            "url": "{{stock_host}}/receptions",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codeArticle\": \"INCONNU\",\n  \"quantite\": 10\n}"
+            },
+            "description": "Article inconnu → 404."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "9 – Scénario complet (séjour IPG-0002)",
+      "item": [
+        {
+          "name": "9.1 Ouvrir séjour IPG-0002 sur L-11",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('sejourId2', json.sejourId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{sejour_host}}/sejours",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ipg\": \"IPG-0002\",\n  \"service\": \"CHIRURGIE\",\n  \"litId\": \"L-11\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "9.2 Enregistrer radiographie + chirurgie simple",
+          "request": {
+            "method": "POST",
+            "url": "{{sejour_host}}/sejours/{{sejourId2}}/actes",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lignes\": [\n    { \"codeActe\": \"RADIO\",  \"quantite\": 1, \"dateActe\": \"2026-11-27\" },\n    { \"codeActe\": \"CHIR-A\", \"quantite\": 1, \"dateActe\": \"2026-11-27\" },\n    { \"codeActe\": \"NUIT\",   \"quantite\": 3, \"dateActe\": \"2026-11-27\" }\n  ]\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "9.3 Enregistrer consommation médicaments",
+          "request": {
+            "method": "POST",
+            "url": "{{stock_host}}/consommations",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sejourId\": \"{{sejourId2}}\",\n  \"codeArticle\": \"AMOX1G\",\n  \"quantite\": 10\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "9.4 Valider la sortie de IPG-0002",
+          "request": {
+            "method": "PUT",
+            "url": "{{sejour_host}}/sejours/{{sejourId2}}/sortie",
+            "description": "Clôture le séjour et envoie l'événement sortie à l'ESB."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
