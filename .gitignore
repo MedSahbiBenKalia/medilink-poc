@@ -1,0 +1,13 @@
+﻿.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+target/
+*.class
+.mule/
+node_modules/
+infra/data/
+*.dump
+.env
+.env.local
