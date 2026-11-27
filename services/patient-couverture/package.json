@@ -10,7 +10,8 @@
     "patient": "node src/patient/server.js",
     "couverture": "node src/couverture/server.js",
     "dev:patient": "node --watch src/patient/server.js",
-    "dev:couverture": "node --watch src/couverture/server.js"
+    "dev:couverture": "node --watch src/couverture/server.js",
+    "faux-esb": "node outils/faux-esb.js"
   },
   "dependencies": {
     "axios": "^1.21.1",
