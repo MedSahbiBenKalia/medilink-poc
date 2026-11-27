@@ -1,0 +1,211 @@
+{
+  "info": {
+    "name": "MediLink - Tache 2 : Patient et Couverture",
+    "description": "Scenarios de test du Service Patient (8091) et du Service Couverture / Droits (8092).\n\nLancer d'abord : npm run patient, npm run couverture (et npm run faux-esb si ESB_MODE=real).\nDemo multi-PC : changer les variables patientUrl et couvertureUrl (http://192.168.1.12:8091 / :8092).\n\nLes requetes s'executent dans l'ordre (Run collection). La derniere remet IPG-0002 dans son etat initial pour pouvoir relancer.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "patientUrl", "value": "http://localhost:8091" },
+    { "key": "couvertureUrl", "value": "http://localhost:8092" }
+  ],
+  "item": [
+    {
+      "name": "1. Service Patient",
+      "item": [
+        {
+          "name": "Health",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 et statut ok', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().statut).to.eql('ok'); });"
+          ] } }],
+          "request": { "method": "GET", "url": "{{patientUrl}}/health" }
+        },
+        {
+          "name": "Lire IPG-0001",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 Ali Ben Salah', () => { pm.response.to.have.status(200); const p = pm.response.json(); pm.expect(p.nom).to.eql('Ben Salah'); pm.expect(p.typeCouverture).to.eql('CNAM'); });"
+          ] } }],
+          "request": { "method": "GET", "url": "{{patientUrl}}/patients/IPG-0001" }
+        },
+        {
+          "name": "Rechercher par CIN 08123456",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 IPG-0001', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().ipg).to.eql('IPG-0001'); });"
+          ] } }],
+          "request": { "method": "GET", "url": { "raw": "{{patientUrl}}/patients?cin=08123456", "host": ["{{patientUrl}}"], "path": ["patients"], "query": [{ "key": "cin", "value": "08123456" }] } }
+        },
+        {
+          "name": "Lire IPG-9999 (inconnu -> 404)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('404 avec message erreur', () => { pm.response.to.have.status(404); pm.expect(pm.response.json()).to.have.property('erreur'); });"
+          ] } }],
+          "request": { "method": "GET", "url": "{{patientUrl}}/patients/IPG-9999" }
+        },
+        {
+          "name": "Creer un patient (201, IPG genere)",
+          "event": [
+            { "listen": "prerequest", "script": { "exec": [
+              "// CIN aleatoire pour pouvoir relancer la collection sans conflit",
+              "pm.collectionVariables.set('cinTest', '09' + String(Math.floor(Math.random() * 1e6)).padStart(6, '0'));"
+            ] } },
+            { "listen": "test", "script": { "exec": [
+              "pm.test('201 et IPG au format IPG-xxxx', () => { pm.response.to.have.status(201); pm.expect(pm.response.json().ipg).to.match(/^IPG-\\d{4,}$/); });",
+              "pm.collectionVariables.set('nouvelIpg', pm.response.json().ipg);"
+            ] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{patientUrl}}/patients",
+            "body": { "mode": "raw", "raw": "{\n  \"cin\": \"{{cinTest}}\",\n  \"nom\": \"Haddad\",\n  \"prenom\": \"Yasmine\",\n  \"dateNaissance\": \"1995-02-14\",\n  \"telephone\": \"+21620555666\",\n  \"email\": \"yasmine@test.tn\",\n  \"typeCouverture\": \"CNAM\",\n  \"numeroAssure\": \"CN-100005\",\n  \"assureur\": null\n}" }
+          }
+        },
+        {
+          "name": "Creer le meme patient (CIN deja connu -> 409)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('409', () => pm.response.to.have.status(409));"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{patientUrl}}/patients",
+            "body": { "mode": "raw", "raw": "{\n  \"cin\": \"{{cinTest}}\",\n  \"nom\": \"Haddad\",\n  \"prenom\": \"Yasmine\",\n  \"dateNaissance\": \"1995-02-14\",\n  \"typeCouverture\": \"CNAM\",\n  \"numeroAssure\": \"CN-100005\",\n  \"assureur\": null\n}" }
+          }
+        },
+        {
+          "name": "Creer un patient invalide (-> 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('400 avec la liste des erreurs', () => { pm.response.to.have.status(400); pm.expect(pm.response.json().erreur).to.include('cin'); });"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{patientUrl}}/patients",
+            "body": { "mode": "raw", "raw": "{\n  \"cin\": \"123\",\n  \"nom\": \"Test\",\n  \"prenom\": \"Invalide\",\n  \"typeCouverture\": \"ASSUREUR\",\n  \"numeroAssure\": \"ST-1\"\n}" }
+          }
+        },
+        {
+          "name": "Modifier le telephone du nouveau patient (PATCH)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 et seul le telephone change', () => { pm.response.to.have.status(200); const p = pm.response.json(); pm.expect(p.telephone).to.eql('+21629999999'); pm.expect(p.nom).to.eql('Haddad'); });"
+          ] } }],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{patientUrl}}/patients/{{nouvelIpg}}",
+            "body": { "mode": "raw", "raw": "{\n  \"telephone\": \"+21629999999\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Service Couverture / Droits",
+      "item": [
+        {
+          "name": "Health",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 et statut ok', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().service).to.eql('couverture'); });"
+          ] } }],
+          "request": { "method": "GET", "url": "{{couvertureUrl}}/health" }
+        },
+        {
+          "name": "Verifier IPG-0001 (CNAM, nominal -> true)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('droits valides, CNAM', () => { pm.response.to.have.status(200); const c = pm.response.json(); pm.expect(c.droitsValides).to.eql(true); pm.expect(c.organisme).to.eql('CNAM'); pm.expect(c.accordId).to.be.a('string'); });"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{couvertureUrl}}/couvertures/verification",
+            "body": { "mode": "raw", "raw": "{ \"ipg\": \"IPG-0001\" }" }
+          }
+        },
+        {
+          "name": "Verifier IPG-0002 (CNAM expire -> false)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('droits invalides avec motif', () => { pm.response.to.have.status(200); const c = pm.response.json(); pm.expect(c.droitsValides).to.eql(false); pm.expect(c.motif).to.include('Droits expirés'); });"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{couvertureUrl}}/couvertures/verification",
+            "body": { "mode": "raw", "raw": "{ \"ipg\": \"IPG-0002\" }" }
+          }
+        },
+        {
+          "name": "Verifier IPG-0003 (assureur STAR -> true)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('droits valides, organisme STAR', () => { pm.response.to.have.status(200); const c = pm.response.json(); pm.expect(c.droitsValides).to.eql(true); pm.expect(c.organisme).to.eql('STAR'); });"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{couvertureUrl}}/couvertures/verification",
+            "body": { "mode": "raw", "raw": "{ \"ipg\": \"IPG-0003\" }" }
+          }
+        },
+        {
+          "name": "Verifier IPG-0004 (CNAM -> true)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('droits valides', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().droitsValides).to.eql(true); });"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{couvertureUrl}}/couvertures/verification",
+            "body": { "mode": "raw", "raw": "{ \"ipg\": \"IPG-0004\" }" }
+          }
+        },
+        {
+          "name": "Verifier IPG-9999 (inconnu -> 404)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('404', () => pm.response.to.have.status(404));"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{couvertureUrl}}/couvertures/verification",
+            "body": { "mode": "raw", "raw": "{ \"ipg\": \"IPG-9999\" }" }
+          }
+        },
+        {
+          "name": "Regulariser IPG-0002 (PATCH, nouveau numero CN-100002B)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('droits valides apres regularisation', () => { pm.response.to.have.status(200); const c = pm.response.json(); pm.expect(c.droitsValides).to.eql(true); pm.expect(c.accordId).to.eql('ACC-MANUEL-01'); pm.expect(c.motif).to.eql('Carte CNAM renouvelée'); });"
+          ] } }],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{couvertureUrl}}/couvertures/IPG-0002",
+            "body": { "mode": "raw", "raw": "{\n  \"numeroAssure\": \"CN-100002B\",\n  \"accordId\": \"ACC-MANUEL-01\",\n  \"motif\": \"Carte CNAM renouvelée\"\n}" }
+          }
+        },
+        {
+          "name": "Controle : le Service Patient a bien le nouveau numero",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('numeroAssure = CN-100002B', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().numeroAssure).to.eql('CN-100002B'); });"
+          ] } }],
+          "request": { "method": "GET", "url": "{{patientUrl}}/patients/IPG-0002" }
+        },
+        {
+          "name": "Lire la couverture de IPG-0002",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('derniere couverture = regularisation', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().droitsValides).to.eql(true); });"
+          ] } }],
+          "request": { "method": "GET", "url": "{{couvertureUrl}}/couvertures/IPG-0002" }
+        },
+        {
+          "name": "Remise a zero : IPG-0002 reprend CN-100002",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));"
+          ] } }],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{patientUrl}}/patients/IPG-0002",
+            "body": { "mode": "raw", "raw": "{ \"numeroAssure\": \"CN-100002\" }" }
+          }
+        }
+      ]
+    }
+  ]
+}

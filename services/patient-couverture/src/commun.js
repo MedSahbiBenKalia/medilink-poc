@@ -33,6 +33,11 @@ function demarrer(app, port, nomService) {
     if (err.type === 'entity.parse.failed') {
       return res.status(400).json({ erreur: 'Corps JSON invalide' });
     }
+    // Base PostgreSQL arretee ou mal configuree (DB_URL) -> 503 plutot qu'une erreur interne
+    if (['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT', 'EAI_AGAIN', '28P01', '3D000'].includes(err.code)) {
+      console.warn(`[${nomService}] 503 Base de donnees injoignable (${err.code})`);
+      return res.status(503).json({ erreur: 'Base de donnees injoignable' });
+    }
     const status = err.status || 500;
     if (!err.status) console.error(`[${nomService}] erreur inattendue :`, err); // bug : pile complete
     else if (status >= 500) console.warn(`[${nomService}] ${status} ${err.message}`); // panne prevue : une ligne
