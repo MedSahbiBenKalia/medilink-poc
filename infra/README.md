@@ -20,4 +20,5 @@ infra/
 - [x] Etape 2 : schemas SQL et donnees de test (`postgres/init/01-soins.sql`, `02-pharmacie.sql`, `03-gestion.sql`)
 - [x] Etape 3 : docker-compose, RabbitMQ, Mailpit
 - [x] Etape 4 : verification sur un PC (profil `all`)
-- [ ] Etape 5 : plan reseau (docs/)
+- [x] Etape 5 : plan reseau ([`../docs/reseau.md`](../docs/reseau.md), `scripts/pare-feu.ps1`, `scripts/test-reseau.ps1`)
+- [ ] Repetition sur les vrais PC (envoyer au groupe : nom du reseau et IP de chaque PC)
