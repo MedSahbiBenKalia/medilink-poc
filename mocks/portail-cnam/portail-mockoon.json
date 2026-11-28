@@ -1,0 +1,221 @@
+{
+  "uuid": "4e9dbf06-82e1-41a1-810e-c0e051cb05c1",
+  "lastMigration": 33,
+  "name": "MediLink - Portail CNAM",
+  "endpointPrefix": "",
+  "latency": 0,
+  "port": 8103,
+  "hostname": "0.0.0.0",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "d30e0bcf-f74f-4e4a-9074-cbb3919cfd56",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "",
+      "responses": [
+        {
+          "uuid": "3837750f-3f4d-42e4-bcfa-6ab5a69061c4",
+          "body": "{}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "a4d578a1-5e67-4d2c-8ee5-ab21f6cb7256",
+      "type": "http",
+      "documentation": "Réception des bordereaux XML",
+      "method": "post",
+      "endpoint": "portail/bordereaux",
+      "responses": [
+        {
+          "uuid": "f713abea-799c-43f0-a4ed-8fd307fe6e3d",
+          "body": "{\n  \"statut\": \"RECU\",\n  \"message\": \"Bordereau recu avec succes\"\n}",
+          "latency": 0,
+          "statusCode": 202,
+          "label": "BordereauRecu-Acceptation",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": [
+            {
+              "uuid": "797e1d73-7c16-4ec4-8862-d44ff6bedce2",
+              "latency": 15000
+            },
+            {
+              "uuid": "797e1d73-7c16-4ec4-8862-d44ff6bedce2",
+              "latency": 0
+            }
+          ]
+        },
+        {
+          "uuid": "47eb159a-e2a0-4df8-88a2-72c44f82f086",
+          "body": "{\n  \"statut\": \"RECU\",\n  \"message\": \"Bordereau recu avec succes\"\n}",
+          "latency": 0,
+          "statusCode": 202,
+          "label": "BordereauRecu-Rejet",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "bordereau.dossier.ipg._text",
+              "value": "IPG-0004",
+              "invert": false,
+              "operator": "equals"
+            },
+            {
+              "target": "body",
+              "modifier": "bordereau.version._text",
+              "value": "1",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "AND",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": [
+            {
+              "uuid": "77a3698b-991f-4424-9183-d1a3091bc740",
+              "latency": 15000
+            }
+          ]
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    }
+  ],
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "d30e0bcf-f74f-4e4a-9074-cbb3919cfd56"
+    },
+    {
+      "type": "route",
+      "uuid": "a4d578a1-5e67-4d2c-8ee5-ab21f6cb7256"
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "cors": true,
+  "headers": [
+    {
+      "key": "Content-Type",
+      "value": "application/json"
+    },
+    {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    },
+    {
+      "key": "Access-Control-Allow-Methods",
+      "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+    },
+    {
+      "key": "Access-Control-Allow-Headers",
+      "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+    }
+  ],
+  "proxyReqHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "proxyResHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "data": [],
+  "callbacks": [
+    {
+      "uuid": "797e1d73-7c16-4ec4-8862-d44ff6bedce2",
+      "id": "x90a",
+      "uri": "http://192.168.1.13:8082/esb-gestion/cnam/reponses",
+      "name": "CnamAcceptation",
+      "documentation": "",
+      "method": "post",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "bodyType": "INLINE",
+      "body": "{\n  \"bordereauId\": \"{{body 'bordereau.numero._text'}}\",\n  \"decision\": \"ACCEPTE\",\n  \"motif\": null\n}",
+      "databucketID": "",
+      "filePath": "",
+      "sendFileAsBody": true
+    },
+    {
+      "uuid": "77a3698b-991f-4424-9183-d1a3091bc740",
+      "id": "rj6z",
+      "uri": "http://192.168.1.13:8082/esb-gestion/cnam/reponses",
+      "name": "CnamRejet",
+      "documentation": "",
+      "method": "post",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "bodyType": "INLINE",
+      "body": "{\n  \"bordereauId\": \"{{body 'bordereau.numero._text'}}\",\n  \"decision\": \"REJETE\",\n  \"motif\": \"Code acte invalide\"\n}",
+      "databucketID": "",
+      "filePath": "",
+      "sendFileAsBody": true
+    }
+  ]
+}
