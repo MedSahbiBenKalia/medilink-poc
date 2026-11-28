@@ -1,0 +1,3 @@
+type;ipg;sejourId;code;quantite;date
+ACTE;IPG-0001;SEJ-0001;CHIR-A;1;2026-12-10
+ACTE;IPG-0001;SEJ-0001;NUIT;2;2026-12-11
