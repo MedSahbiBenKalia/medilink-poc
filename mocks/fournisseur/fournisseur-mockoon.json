@@ -1,0 +1,94 @@
+{
+  "uuid": "bbf7a84a-79c2-42f7-86a0-2334d90ac280",
+  "lastMigration": 33,
+  "name": "MediLink - Fournisseur REST",
+  "endpointPrefix": "",
+  "latency": 0,
+  "port": 8104,
+  "hostname": "0.0.0.0",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "6b94abfd-fef6-4144-a388-b9c87eafa6da",
+      "type": "http",
+      "documentation": "Réception des commandes fournisseurs",
+      "method": "post",
+      "endpoint": "fournisseurs/commandes",
+      "responses": [
+        {
+          "uuid": "0b5f4837-f2d9-4395-87e7-503acad5eb92",
+          "body": "{\n  \"commandeId\": \"{{body 'commandeId'}}\",\n  \"statut\": \"RECUE\",\n  \"delaiLivraisonJours\": 2\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "CommandeRecue",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    }
+  ],
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "6b94abfd-fef6-4144-a388-b9c87eafa6da"
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "cors": true,
+  "headers": [
+    {
+      "key": "Content-Type",
+      "value": "application/json"
+    },
+    {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    },
+    {
+      "key": "Access-Control-Allow-Methods",
+      "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+    },
+    {
+      "key": "Access-Control-Allow-Headers",
+      "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+    }
+  ],
+  "proxyReqHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "proxyResHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "data": [],
+  "callbacks": []
+}
