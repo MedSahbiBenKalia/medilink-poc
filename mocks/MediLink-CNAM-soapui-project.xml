@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project id="2cba2818-a14d-46c8-875b-39f87c08b448" activeEnvironment="Default" name="MediLink-CNAM" resourceRoot="" soapui-version="5.10.1" abortOnError="false" runType="SEQUENTIAL" xmlns:con="http://eviware.com/soapui/config"><con:settings/><con:interface xsi:type="con:WsdlInterface" id="9b77db9c-4c99-43f9-8aaf-bb2b5bc6e1d0" wsaVersion="NONE" name="CNAMSoapBinding" type="wsdl" bindingName="{urn:medilink:cnam:droits}CNAMSoapBinding" soapVersion="1_1" anonymous="optional" definition="file:/C:/Users/Nour/Desktop/projet%20urbanisation/medilink-poc/mocks/cnam-soap/cnam.wsdl" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:settings/><con:definitionCache type="TEXT" rootPart="file:\C:\Users\Nour\Desktop\projet%20urbanisation\medilink-poc\mocks\cnam-soap\cnam.wsdl"><con:part><con:url>file:\C:\Users\Nour\Desktop\projet%20urbanisation\medilink-poc\mocks\cnam-soap\cnam.wsdl</con:url><con:content><![CDATA[<wsdl:definitions name="CNAMService" targetNamespace="urn:medilink:cnam:droits" xmlns:tns="urn:medilink:cnam:droits" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <!--1. Structure des données-->
+  <wsdl:types>
+    <xsd:schema targetNamespace="urn:medilink:cnam:droits" elementFormDefault="qualified">
+      <xsd:element name="verifierDroitsRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="numeroAssure" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="verifierDroitsResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="droitsValides" type="xsd:boolean"/>
+            <xsd:element name="dateFinDroits" type="xsd:date" nillable="true"/>
+            <xsd:element name="motif" type="xsd:string" nillable="true"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </wsdl:types>
+  <!--2. Messages échangés-->
+  <wsdl:message name="VerifierDroitsInput">
+    <wsdl:part name="parameters" element="tns:verifierDroitsRequest"/>
+  </wsdl:message>
+  <wsdl:message name="VerifierDroitsOutput">
+    <wsdl:part name="parameters" element="tns:verifierDroitsResponse"/>
+  </wsdl:message>
+  <!--3. Opération du service-->
+  <wsdl:portType name="CNAMPortType">
+    <wsdl:operation name="verifierDroits">
+      <wsdl:input message="tns:VerifierDroitsInput"/>
+      <wsdl:output message="tns:VerifierDroitsOutput"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <!--4. Protocole SOAP-->
+  <wsdl:binding name="CNAMSoapBinding" type="tns:CNAMPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="verifierDroits">
+      <soap:operation soapAction="verifierDroits"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <!--5. Adresse du service-->
+  <wsdl:service name="CNAMService">
+    <wsdl:port name="CNAMSoapPort" binding="tns:CNAMSoapBinding">
+      <soap:address location="http://localhost:8101/cnam/droits"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>]]></con:content><con:type>http://schemas.xmlsoap.org/wsdl/</con:type></con:part></con:definitionCache><con:endpoints><con:endpoint>http://DESKTOP-5NENLH2:8101/cnam/droits</con:endpoint><con:endpoint>http://localhost:8101/cnam/droits</con:endpoint></con:endpoints><con:operation id="2b708ff5-8ab9-49cd-ad53-4ffa18ab3d3e" isOneWay="false" action="verifierDroits" name="verifierDroits" bindingOperationName="verifierDroits" type="Request-Response" inputName="" receivesAttachments="false" sendsAttachments="false" anonymous="optional"><con:settings/><con:call id="e875578a-2dbf-44e9-8e34-63c1f9baf364" name="Request 1"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://localhost:8101/cnam/droits</con:endpoint><con:request><![CDATA[<soapenv:Envelope
+    xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:cnam="urn:medilink:cnam:droits">
+    <soapenv:Header/>
+    <soapenv:Body>
+        <cnam:verifierDroitsRequest>
+            <cnam:numeroAssure>CN-100001</cnam:numeroAssure>
+        </cnam:verifierDroitsRequest>
+    </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="verifierDroits"/><con:wsrmConfig version="1.2"/></con:call></con:operation></con:interface><con:mockService id="c5c49284-616e-4e31-a222-a0af8fb20e9c" port="8101" path="/cnam/droits" host="DESKTOP-5NENLH2" name="CNAMMockService"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.mock.WsdlMockService@require-soap-action">false</con:setting></con:settings><con:properties/><con:mockOperation name="verifierDroits" id="1fbf9cba-53b5-407c-94a9-fa59d69b319c" interface="CNAMSoapBinding" operation="verifierDroits"><con:settings/><con:defaultResponse>Response 1</con:defaultResponse><con:dispatchStyle>QUERY_MATCH</con:dispatchStyle><con:response name="DroitsValides" id="1e1e0666-fedc-4fc1-b9d0-0b8705ccb175" httpResponseStatus="200" encoding="UTF-8"><con:settings/><con:responseContent><![CDATA[<soapenv:Envelope
+    xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:cnam="urn:medilink:cnam:droits"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <soapenv:Header/>
+    <soapenv:Body>
+        <cnam:verifierDroitsResponse>
+            <cnam:droitsValides>true</cnam:droitsValides>
+            <cnam:dateFinDroits>2027-12-31</cnam:dateFinDroits>
+            <cnam:motif xsi:nil="true"/>
+        </cnam:verifierDroitsResponse>
+    </soapenv:Body>
+</soapenv:Envelope>]]></con:responseContent><con:wsaConfig mustUnderstand="NONE" version="200508" action="verifierDroits"/></con:response><con:response name="DroitsInvalides" id="4786255e-fde1-41cd-8098-b160c2cf5685" httpResponseStatus="200" encoding="UTF-8"><con:settings/><con:responseContent><![CDATA[<soapenv:Envelope
+    xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:cnam="urn:medilink:cnam:droits">
+    <soapenv:Header/>
+    <soapenv:Body>
+        <cnam:verifierDroitsResponse>
+            <cnam:droitsValides>false</cnam:droitsValides>
+            <cnam:dateFinDroits>2025-12-31</cnam:dateFinDroits>
+            <cnam:motif>Droits expires</cnam:motif>
+        </cnam:verifierDroitsResponse>
+    </soapenv:Body>
+</soapenv:Envelope>]]></con:responseContent><con:wsaConfig mustUnderstand="NONE" version="200508" action="verifierDroits"/></con:response><con:dispatchConfig xsi:type="con:MockOperationQueryMatchDispatch" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:query><con:name>Patient1Valide</con:name><con:query>//*[local-name()='numeroAssure']/text()</con:query><con:match>CN-100001</con:match><con:response>DroitsValides</con:response></con:query><con:query><con:name>Patient2Invalide</con:name><con:query>//*[local-name()='numeroAssure']/text()</con:query><con:match>CN-100002</con:match><con:response>DroitsInvalides</con:response></con:query><con:query><con:name>Patient4Valide</con:name><con:query>//*[local-name()='numeroAssure']/text()</con:query><con:match>CN-100004</con:match><con:response>DroitsValides</con:response></con:query></con:dispatchConfig></con:mockOperation></con:mockService><con:properties/><con:wssContainer/><con:oAuth2ProfileContainer/><con:oAuth1ProfileContainer/></con:soapui-project>

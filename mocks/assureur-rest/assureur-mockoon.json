@@ -1,0 +1,163 @@
+{
+  "uuid": "5bebc7a5-dd06-4390-bfc4-3a4b84a601b3",
+  "lastMigration": 33,
+  "name": "MediLink - Assureur REST",
+  "endpointPrefix": "",
+  "latency": 0,
+  "port": 8102,
+  "hostname": "0.0.0.0",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "3e75bf37-b923-4aeb-bcc3-5474b8d1580f",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "",
+      "responses": [
+        {
+          "uuid": "110ac8ef-f45a-4fc0-9663-9af65cdeccc2",
+          "body": "{}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "28420f5f-ec48-4e49-8062-4dee6f679401",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "assureurs/:assureur/droits/:numeroAssure",
+      "responses": [
+        {
+          "uuid": "8d2e4bf9-235a-4140-a600-6699ac271477",
+          "body": "{\n  \"droitsValides\": true,\n  \"accordId\": \"STAR-ACC-77\",\n  \"motif\": null\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "DroitValides",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "params",
+              "modifier": "assureur",
+              "value": "STAR",
+              "invert": false,
+              "operator": "equals"
+            },
+            {
+              "target": "params",
+              "modifier": "numeroAssure",
+              "value": "ST-300003",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "AND",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "48467474-6460-4203-8891-38ea9f0dbf74",
+          "body": "{\n  \"droitsValides\": false,\n  \"accordId\": null,\n  \"motif\": \"Assure inconnu ou droits invalides\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "DroitsInvalides",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    }
+  ],
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "3e75bf37-b923-4aeb-bcc3-5474b8d1580f"
+    },
+    {
+      "type": "route",
+      "uuid": "28420f5f-ec48-4e49-8062-4dee6f679401"
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "cors": true,
+  "headers": [
+    {
+      "key": "Content-Type",
+      "value": "application/json"
+    },
+    {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    },
+    {
+      "key": "Access-Control-Allow-Methods",
+      "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+    },
+    {
+      "key": "Access-Control-Allow-Headers",
+      "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+    }
+  ],
+  "proxyReqHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "proxyResHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "data": [],
+  "callbacks": []
+}
